@@ -170,7 +170,7 @@ write_section() {
         if [[ "$key" =~ ^${section}:(.+)$ ]]; then
             local directive="${BASH_REMATCH[1]}"
             local value="${CONFIG[$key]}"
-            local comment="${CONFIG_COMMENTS[$key]}"
+            local comment="${CONFIG_COMMENTS[$key]:-}"
 
             if [[ -n "$comment" ]]; then
                 printf "    %-30s %s\n" "$directive $value" "$comment"
@@ -519,7 +519,7 @@ clone_section() {
         if [[ "$key" =~ ^${source_section}:(.+)$ ]]; then
             local directive="${BASH_REMATCH[1]}"
             CONFIG["${new_section}:${directive}"]="${CONFIG[$key]}"
-            if [[ -n "${CONFIG_COMMENTS[$key]}" ]]; then
+            if [[ -n "${CONFIG_COMMENTS[$key]:-}" ]]; then
                 CONFIG_COMMENTS["${new_section}:${directive}"]="${CONFIG_COMMENTS[$key]}"
             fi
         fi
