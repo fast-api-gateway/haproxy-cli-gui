@@ -1,0 +1,44 @@
+# Backup files
+backups/
+*.backup
+*.bak
+*.old
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Editor files
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+*.kate-swp
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test outputs
+test-output/
+coverage/
+
+# Local configuration
+.env
+.env.local
+local.conf
+
+# Runtime files
+*.pid
+*.sock
+haproxy.sock
