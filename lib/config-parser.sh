@@ -49,7 +49,7 @@ parse_config_file() {
 
     # Read file line by line
     while IFS= read -r line || [[ -n "$line" ]]; do
-        ((line_number++))
+        (( line_number += 1 ))
 
         # Trim leading/trailing whitespace
         line=$(trim "$line")
@@ -88,7 +88,7 @@ parse_config_file() {
             if ! array_contains "$current_section" "${SECTION_LIST[@]}"; then
                 SECTION_LIST+=("$current_section")
                 CONFIG_ORDER["$current_section"]=$section_counter
-                ((section_counter++))
+                (( section_counter += 1 ))
             fi
 
             log_debug "Found section: $current_section"
@@ -175,7 +175,7 @@ add_array_directive() {
 
     # Find next available index
     while [[ -n "${CONFIG_ARRAYS[${key}:${index}]:-}" ]]; do
-        ((index++))
+        (( index += 1 ))
     done
 
     CONFIG_ARRAYS["${key}:${index}"]="$value"
@@ -258,11 +258,13 @@ get_array_directive() {
 
     while [[ -n "${CONFIG_ARRAYS[${key}:${index}]:-}" ]]; do
         result+=("${CONFIG_ARRAYS[${key}:${index}]}")
-        ((index++))
+        (( index += 1 ))
     done
 
     # Print each value on a new line
-    printf '%s\n' "${result[@]}"
+    if [[ ${#result[@]} -gt 0 ]]; then
+        printf '%s\n' "${result[@]}"
+    fi
 }
 
 # Get all servers in a backend
@@ -417,16 +419,16 @@ get_config_stats() {
     # Count sections
     for section in "${SECTION_LIST[@]}"; do
         case "$section" in
-            frontend:*) ((frontend_count++)) ;;
-            backend:*) ((backend_count++)) ;;
-            listen:*) ((listen_count++)) ;;
+            frontend:*) (( frontend_count += 1 )) ;;
+            backend:*) (( backend_count += 1 )) ;;
+            listen:*) (( listen_count += 1 )) ;;
         esac
     done
 
     # Count servers
     for key in "${!CONFIG_ARRAYS[@]}"; do
         if [[ "$key" =~ :server:[0-9]+$ ]]; then
-            ((server_count++))
+            (( server_count += 1 ))
         fi
     done
 

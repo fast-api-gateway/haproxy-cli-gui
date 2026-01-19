@@ -117,7 +117,7 @@ write_config_file() {
     log_info "========================================"
     show_success "Configuration written successfully to: $target_file"
 
-    if [[ -n "$backup_file" ]]; then
+    if [[ -n "${backup_file:-}" ]]; then
         show_info "Backup available at: $(basename "$backup_file")"
     fi
 
@@ -321,8 +321,8 @@ add_array_directive_value() {
     fi
 
     # Find next available index
-    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]}" ]]; do
-        ((index++))
+    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]:-}" ]]; do
+        (( index += 1 ))
     done
 
     CONFIG_ARRAYS["${key}:${index}"]="$value"
@@ -351,7 +351,7 @@ update_array_directive_value() {
     fi
 
     # Check if exists
-    if [[ -z "${CONFIG_ARRAYS[$key]}" ]]; then
+    if [[ -z "${CONFIG_ARRAYS[$key]:-}" ]]; then
         log_error "update_array_directive_value: Array directive not found: $key"
         return 1
     fi
@@ -399,17 +399,11 @@ reindex_array_directive() {
     local -a values=()
     local index
 
-    # Collect all existing values
-    index=0
-    while true; do
-        local key="${key_prefix}:${index}"
-        if [[ -n "${CONFIG_ARRAYS[$key]}" ]]; then
-            values+=("${CONFIG_ARRAYS[$key]}")
-        fi
-        ((index++))
-        # Stop when we've checked enough indices
-        if [[ $index -gt 1000 ]]; then
-            break
+    # Collect all existing values by iterating through existing keys
+    for key in "${!CONFIG_ARRAYS[@]}"; do
+        if [[ "$key" =~ ^${key_prefix}:([0-9]+)$ ]]; then
+            local idx="${BASH_REMATCH[1]}"
+            values[$idx]="${CONFIG_ARRAYS[$key]}"
         fi
     done
 
@@ -424,7 +418,7 @@ reindex_array_directive() {
     index=0
     for value in "${values[@]}"; do
         CONFIG_ARRAYS["${key_prefix}:${index}"]="$value"
-        ((index++))
+        (( index += 1 ))
     done
 }
 

@@ -433,6 +433,11 @@ array_contains() {
     shift
     local array=("$@")
 
+    # Handle empty array case
+    if [[ ${#array[@]} -eq 0 ]]; then
+        return 1
+    fi
+
     for item in "${array[@]}"; do
         if [[ "$item" == "$element" ]]; then
             return 0
@@ -448,6 +453,12 @@ array_join() {
     shift
     local array=("$@")
     local result=""
+
+    # Handle empty array case
+    if [[ ${#array[@]} -eq 0 ]]; then
+        echo ""
+        return 0
+    fi
 
     for item in "${array[@]}"; do
         if [[ -z "$result" ]]; then

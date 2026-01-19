@@ -190,7 +190,7 @@ validate_loaded_config() {
     for section in "${SECTION_LIST[@]}"; do
         if [[ "$section" =~ ^frontend: ]]; then
             if ! validate_section_references "$section"; then
-                ((errors++))
+                (( errors += 1 ))
             fi
         fi
     done
@@ -221,7 +221,7 @@ check_config_warnings() {
 
     if [[ $frontend_count -eq 0 ]]; then
         log_warn "No frontends defined in configuration"
-        ((warnings++))
+        (( warnings += 1 ))
     fi
 
     # Check if there are any backends
@@ -230,7 +230,7 @@ check_config_warnings() {
 
     if [[ $backend_count -eq 0 ]] && [[ $frontend_count -gt 0 ]]; then
         log_warn "Frontends defined but no backends"
-        ((warnings++))
+        (( warnings += 1 ))
     fi
 
     # Check for backends with no servers
@@ -239,7 +239,7 @@ check_config_warnings() {
         servers=$(get_array_directive "$section" "server")
         if [[ -z "$servers" ]]; then
             log_warn "Backend $section has no servers defined"
-            ((warnings++))
+            (( warnings += 1 ))
         fi
     done
 
