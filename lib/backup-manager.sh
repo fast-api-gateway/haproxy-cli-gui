@@ -193,7 +193,7 @@ restore_backup() {
         log_error "Failed to extract backup content"
         rm -f "${target_file}.tmp" 2>/dev/null
         return 1
-    fi
+    }
 
     # Atomic move
     mv -f "${target_file}.tmp" "$target_file" 2>/dev/null || {
