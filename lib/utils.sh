@@ -258,6 +258,11 @@ is_valid_server_name() {
     is_valid_section_name "$1"
 }
 
+# Validate ACL name
+is_valid_acl_name() {
+    is_valid_section_name "$1"
+}
+
 # File operations
 
 # Ensure directory exists
@@ -529,7 +534,7 @@ export -f log_message log_debug log_info log_warn log_error
 export -f show_success show_error show_warning show_info
 export -f trim to_lower to_upper escape_string unquote
 export -f is_valid_ipv4 is_valid_ipv6 is_valid_ip is_valid_port
-export -f is_valid_bind_address is_valid_timeout is_valid_section_name is_valid_server_name
+export -f is_valid_bind_address is_valid_timeout is_valid_section_name is_valid_server_name is_valid_acl_name
 export -f ensure_directory safe_write get_file_hash file_has_changed get_file_mtime
 export -f is_root command_exists check_dependencies get_dialog_command confirm_action
 export -f array_contains array_join
