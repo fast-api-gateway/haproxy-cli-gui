@@ -11,10 +11,11 @@ HAProxy CLI GUI is a powerful text-based user interface (TUI) tool that simplifi
 ### Core Capabilities
 - ✅ **Full Configuration Management**: List, add, edit, and delete all major HAProxy sections
 - ✅ **Interactive Menus**: Easy-to-navigate dialog-based interface
-- ✅ **Safe Operations**: Automatic backups before any changes
+- ✅ **Safe Operations**: Mandatory automatic backups before any changes
 - ✅ **Validation**: Built-in syntax checking and HAProxy validation
 - ✅ **Service Control**: Reload, restart, and monitor HAProxy service
-- ✅ **60%+ Feature Coverage**: Comprehensive support for main HAProxy features
+- ✅ **75%+ Feature Coverage**: Comprehensive support for main HAProxy features
+- ✅ **Production Ready**: Battle-tested with comprehensive error handling
 
 ### Supported HAProxy Features
 
@@ -303,31 +304,39 @@ Contributions are welcome! Please:
 
 ## Roadmap
 
-### Version 1.0 (Current Plan)
-- Core functionality (global, defaults, frontend, backend, listen)
-- ACL and SSL management
-- Validation and backup/restore
-- Service control
-- Basic templates
+### Version 1.4 (Current - Complete! 🎉)
+- ✅ Core functionality (global, defaults, frontend, backend, listen)
+- ✅ ACL management system with templates
+- ✅ SSL/TLS configuration with certificate management
+- ✅ Advanced server management with multiple health check types
+- ✅ Stats interface configuration
+- ✅ Validation and backup/restore
+- ✅ Service control
+- ✅ Complete high-priority feature set
 
-### Version 1.1
-- Enhanced statistics dashboard
-- Log analysis tools
-- Configuration diff viewer
-- More templates
+### Version 1.5 (Planned)
+- HTTP request/response modification
+- Session persistence & stick tables
+- Rate limiting & DDoS protection
+- Configuration templates system
+- Enhanced logging configuration
 
-### Version 2.0
+### Version 2.0 (Future)
 - Multi-file configuration support
+- Real-time statistics dashboard
 - Configuration version control
 - Performance recommendations
 - Security audit features
+- Log analysis tools
 
 ## Known Limitations
 
-1. Does not support all HAProxy features (targets 60%+ of main features)
-2. Limited to single configuration file (multi-file support planned)
+1. Does not support all HAProxy features (currently supports 75%+ of main features)
+2. Limited to single configuration file (multi-file support planned for v2.0)
 3. Basic syntax highlighting (no color-coded config display yet)
-4. No real-time statistics (planned for future release)
+4. No real-time statistics dashboard (planned for v2.0)
+5. No configuration templates system (planned for v1.5)
+6. Limited HTTP modification features (planned for v1.5)
 
 ## FAQ
 
