@@ -242,7 +242,7 @@ get_directive() {
     local directive="$2"
     local key="${section}:${directive}"
 
-    echo "${CONFIG[$key]}"
+    echo "${CONFIG[$key]:-}"
 }
 
 # Get all values for array directive
@@ -338,7 +338,7 @@ display_section() {
         if [[ "$key" =~ ^${section}:(.+)$ ]]; then
             local directive="${BASH_REMATCH[1]}"
             local value="${CONFIG[$key]}"
-            local comment="${CONFIG_COMMENTS[$key]}"
+            local comment="${CONFIG_COMMENTS[$key]:-}"
 
             if [[ -n "$comment" ]]; then
                 printf "    %-30s %s\n" "$directive $value" "$comment"
