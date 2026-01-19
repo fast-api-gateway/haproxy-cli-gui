@@ -174,7 +174,7 @@ add_array_directive() {
     local index=0
 
     # Find next available index
-    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]}" ]]; do
+    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]:-}" ]]; do
         ((index++))
     done
 
@@ -256,7 +256,7 @@ get_array_directive() {
     local index=0
     local result=()
 
-    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]}" ]]; do
+    while [[ -n "${CONFIG_ARRAYS[${key}:${index}]:-}" ]]; do
         result+=("${CONFIG_ARRAYS[${key}:${index}]}")
         ((index++))
     done
