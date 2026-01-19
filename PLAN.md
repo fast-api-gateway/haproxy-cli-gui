@@ -3,6 +3,26 @@
 ## Project Overview
 A fully interactive bash-based GUI application for managing HAProxy configuration files. The application will provide an intuitive text-based interface using `dialog` or `whiptail` for configuration management, covering 60%+ of HAProxy's main features.
 
+## Critical Requirements
+
+### MANDATORY: Automatic Full Backup on Every Modification
+**This is a non-negotiable requirement for the application:**
+
+1. **Every configuration update MUST generate a full backup file**
+2. Backup must be created BEFORE any write operation to the config file
+3. Backups are timestamped: `haproxy.cfg.backup.YYYYMMDD_HHMMSS`
+4. Backup creation is automatic and non-optional
+5. If backup creation fails, the write operation MUST be aborted
+6. All backups include metadata (timestamp, user, reason for change)
+7. Backup functionality is implemented in the config writer layer
+
+This ensures:
+- Zero data loss scenarios
+- Easy rollback on any error
+- Full audit trail of all changes
+- Protection against configuration mistakes
+- Safe experimentation with settings
+
 ## Core Features Coverage (60%+ of HAProxy)
 
 ### 1. Global Configuration (10%)
@@ -391,12 +411,14 @@ Main Menu
 - Track indentation for proper formatting
 
 ### 2. Safe Configuration Writing
-- Always create backup before modifications
+- **MANDATORY: Always create full backup before ANY modification** - This is a critical requirement
+- Every config update MUST generate a timestamped full backup file
+- Backup creation is non-optional and happens automatically before writes
 - Validate before writing
 - Use atomic file operations (write to temp, then mv)
 - Preserve file permissions
-- Log all changes
-- Rollback capability on errors
+- Log all changes with backup reference
+- Rollback capability on errors using backup files
 
 ### 3. HAProxy Integration
 - Use `haproxy -c -f config` for validation
@@ -557,7 +579,7 @@ Main Menu
 3. ✅ Edit existing configurations without breaking syntax
 4. ✅ Delete sections safely with confirmation
 5. ✅ Validate configurations before applying
-6. ✅ Create backups automatically
+6. ✅ **Create full backup automatically before EVERY config modification (MANDATORY)**
 7. ✅ Reload HAProxy service after changes
 8. ✅ Cover 60%+ of HAProxy features
 9. ✅ Intuitive and user-friendly interface
