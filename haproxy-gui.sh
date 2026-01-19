@@ -948,15 +948,468 @@ view_backend_details() {
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Settings Menus (Placeholder)
+# Global Settings Menu
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 menu_global_settings() {
-    show_msgbox "Global Settings" "Global settings management\n(Coming in next phase)"
+    while true; do
+        local choice
+        choice=$(show_menu "Global Settings" \
+            "Manage global HAProxy settings:" \
+            "1" "View Global Settings" \
+            "2" "Edit Max Connections" \
+            "3" "Edit User/Group" \
+            "4" "Edit Daemon Mode" \
+            "5" "Edit Threads (nbthread)" \
+            "0" "Back to Main Menu")
+
+        case "$choice" in
+            1) view_global_settings ;;
+            2) edit_global_maxconn ;;
+            3) edit_global_user_group ;;
+            4) edit_global_daemon ;;
+            5) edit_global_nbthread ;;
+            0|"") return ;;
+        esac
+    done
 }
 
+view_global_settings() {
+    local temp_file="/tmp/haproxy-gui-global.$$.txt"
+
+    if section_exists "global"; then
+        display_section "global" > "$temp_file"
+    else
+        echo "Global section not found in configuration" > "$temp_file"
+    fi
+
+    show_textbox "Global Settings" "$temp_file"
+    rm -f "$temp_file"
+}
+
+edit_global_maxconn() {
+    local current_value
+    current_value=$(get_directive "global" "maxconn")
+
+    local new_value
+    new_value=$(show_inputbox "Edit Max Connections" \
+        "Enter maximum concurrent connections:" \
+        "${current_value:-4096}")
+
+    if [[ -z "$new_value" ]]; then
+        return
+    fi
+
+    # Validate it's a number
+    if ! [[ "$new_value" =~ ^[0-9]+$ ]]; then
+        show_msgbox "Error" "Invalid value: must be a number"
+        return
+    fi
+
+    # Ensure global section exists
+    if ! section_exists "global"; then
+        SECTION_LIST=("global" "${SECTION_LIST[@]}")
+        CONFIG_ORDER["global"]=0
+    fi
+
+    if set_directive "global" "maxconn" "$new_value"; then
+        if write_config_file "$CONFIG_FILE" "Updated global maxconn to $new_value"; then
+            show_msgbox "Success" "Max connections set to $new_value"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update maxconn"
+    fi
+}
+
+edit_global_user_group() {
+    local current_user
+    local current_group
+    current_user=$(get_directive "global" "user")
+    current_group=$(get_directive "global" "group")
+
+    local new_user
+    local new_group
+
+    new_user=$(show_inputbox "Edit User" \
+        "Enter user to run HAProxy as:" \
+        "${current_user:-haproxy}")
+
+    if [[ -z "$new_user" ]]; then
+        return
+    fi
+
+    new_group=$(show_inputbox "Edit Group" \
+        "Enter group to run HAProxy as:" \
+        "${current_group:-haproxy}")
+
+    if [[ -z "$new_group" ]]; then
+        return
+    fi
+
+    # Ensure global section exists
+    if ! section_exists "global"; then
+        SECTION_LIST=("global" "${SECTION_LIST[@]}")
+        CONFIG_ORDER["global"]=0
+    fi
+
+    set_directive "global" "user" "$new_user"
+    set_directive "global" "group" "$new_group"
+
+    if write_config_file "$CONFIG_FILE" "Updated global user/group to $new_user:$new_group"; then
+        show_msgbox "Success" "User/Group set to $new_user:$new_group"
+    else
+        show_msgbox "Error" "Failed to write configuration"
+    fi
+}
+
+edit_global_daemon() {
+    local has_daemon
+    has_daemon=$(get_directive "global" "daemon")
+
+    local choice
+    if [[ -n "$has_daemon" ]]; then
+        choice=$(show_radiolist "Daemon Mode" \
+            "Run HAProxy as daemon?" \
+            "yes" "Run as daemon (background)" "on" \
+            "no" "Run in foreground" "off")
+    else
+        choice=$(show_radiolist "Daemon Mode" \
+            "Run HAProxy as daemon?" \
+            "yes" "Run as daemon (background)" "off" \
+            "no" "Run in foreground" "on")
+    fi
+
+    if [[ -z "$choice" ]]; then
+        return
+    fi
+
+    # Ensure global section exists
+    if ! section_exists "global"; then
+        SECTION_LIST=("global" "${SECTION_LIST[@]}")
+        CONFIG_ORDER["global"]=0
+    fi
+
+    if [[ "$choice" == "yes" ]]; then
+        set_directive "global" "daemon" ""
+        local msg="enabled"
+    else
+        delete_directive "global" "daemon"
+        local msg="disabled"
+    fi
+
+    if write_config_file "$CONFIG_FILE" "Updated global daemon mode"; then
+        show_msgbox "Success" "Daemon mode $msg"
+    else
+        show_msgbox "Error" "Failed to write configuration"
+    fi
+}
+
+edit_global_nbthread() {
+    local current_value
+    current_value=$(get_directive "global" "nbthread")
+
+    local new_value
+    new_value=$(show_inputbox "Edit Thread Count" \
+        "Enter number of threads (nbthread):" \
+        "${current_value:-4}")
+
+    if [[ -z "$new_value" ]]; then
+        return
+    fi
+
+    # Validate it's a number
+    if ! [[ "$new_value" =~ ^[0-9]+$ ]]; then
+        show_msgbox "Error" "Invalid value: must be a number"
+        return
+    fi
+
+    # Ensure global section exists
+    if ! section_exists "global"; then
+        SECTION_LIST=("global" "${SECTION_LIST[@]}")
+        CONFIG_ORDER["global"]=0
+    fi
+
+    if set_directive "global" "nbthread" "$new_value"; then
+        if write_config_file "$CONFIG_FILE" "Updated global nbthread to $new_value"; then
+            show_msgbox "Success" "Thread count set to $new_value"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update nbthread"
+    fi
+}
+
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Defaults Settings Menu
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 menu_defaults_settings() {
-    show_msgbox "Defaults Settings" "Defaults settings management\n(Coming in next phase)"
+    while true; do
+        local choice
+        choice=$(show_menu "Defaults Settings" \
+            "Manage default HAProxy settings:" \
+            "1" "View Defaults Settings" \
+            "2" "Edit Mode" \
+            "3" "Edit Timeouts" \
+            "4" "Edit Retries" \
+            "5" "Edit Balance Algorithm" \
+            "6" "Manage Options" \
+            "0" "Back to Main Menu")
+
+        case "$choice" in
+            1) view_defaults_settings ;;
+            2) edit_defaults_mode ;;
+            3) edit_defaults_timeouts ;;
+            4) edit_defaults_retries ;;
+            5) edit_defaults_balance ;;
+            6) manage_defaults_options ;;
+            0|"") return ;;
+        esac
+    done
+}
+
+view_defaults_settings() {
+    local temp_file="/tmp/haproxy-gui-defaults.$$.txt"
+
+    if section_exists "defaults"; then
+        display_section "defaults" > "$temp_file"
+    else
+        echo "Defaults section not found in configuration" > "$temp_file"
+    fi
+
+    show_textbox "Defaults Settings" "$temp_file"
+    rm -f "$temp_file"
+}
+
+edit_defaults_mode() {
+    local current_mode
+    current_mode=$(get_directive "defaults" "mode")
+
+    local new_mode
+    new_mode=$(show_radiolist "Change Default Mode" \
+        "Select default mode:" \
+        "http" "HTTP mode (layer 7)" "$([ "$current_mode" = "http" ] && echo "on" || echo "off")" \
+        "tcp" "TCP mode (layer 4)" "$([ "$current_mode" = "tcp" ] && echo "on" || echo "off")")
+
+    if [[ -z "$new_mode" ]]; then
+        return
+    fi
+
+    # Ensure defaults section exists
+    if ! section_exists "defaults"; then
+        # Insert defaults after global
+        if section_exists "global"; then
+            SECTION_LIST=("global" "defaults" "${SECTION_LIST[@]:1}")
+        else
+            SECTION_LIST=("defaults" "${SECTION_LIST[@]}")
+        fi
+        CONFIG_ORDER["defaults"]=1
+    fi
+
+    if set_directive "defaults" "mode" "$new_mode"; then
+        if write_config_file "$CONFIG_FILE" "Updated defaults mode to $new_mode"; then
+            show_msgbox "Success" "Default mode set to $new_mode"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update mode"
+    fi
+}
+
+edit_defaults_timeouts() {
+    while true; do
+        local choice
+        choice=$(show_menu "Edit Timeouts" \
+            "Select timeout to edit:" \
+            "1" "Timeout Connect" \
+            "2" "Timeout Client" \
+            "3" "Timeout Server" \
+            "4" "Timeout Check" \
+            "5" "Timeout HTTP-Request" \
+            "6" "Timeout HTTP-Keep-Alive" \
+            "0" "Back")
+
+        case "$choice" in
+            1) edit_timeout "connect" "5000ms" ;;
+            2) edit_timeout "client" "50000ms" ;;
+            3) edit_timeout "server" "50000ms" ;;
+            4) edit_timeout "check" "10s" ;;
+            5) edit_timeout "http-request" "10s" ;;
+            6) edit_timeout "http-keep-alive" "10s" ;;
+            0|"") return ;;
+        esac
+    done
+}
+
+edit_timeout() {
+    local timeout_name="$1"
+    local default_value="$2"
+    local directive="timeout $timeout_name"
+
+    local current_value
+    current_value=$(get_directive "defaults" "timeout $timeout_name")
+
+    local new_value
+    new_value=$(show_inputbox "Edit Timeout $timeout_name" \
+        "Enter timeout value (e.g., 5000ms, 10s, 1m):" \
+        "${current_value:-$default_value}")
+
+    if [[ -z "$new_value" ]]; then
+        return
+    fi
+
+    # Validate timeout format
+    if ! is_valid_timeout "$new_value"; then
+        show_msgbox "Error" "Invalid timeout format. Use: <number>[ms|s|m|h|d]"
+        return
+    fi
+
+    # Ensure defaults section exists
+    if ! section_exists "defaults"; then
+        if section_exists "global"; then
+            SECTION_LIST=("global" "defaults" "${SECTION_LIST[@]:1}")
+        else
+            SECTION_LIST=("defaults" "${SECTION_LIST[@]}")
+        fi
+        CONFIG_ORDER["defaults"]=1
+    fi
+
+    if set_directive "defaults" "timeout $timeout_name" "$new_value"; then
+        if write_config_file "$CONFIG_FILE" "Updated defaults timeout $timeout_name to $new_value"; then
+            show_msgbox "Success" "Timeout $timeout_name set to $new_value"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update timeout"
+    fi
+}
+
+edit_defaults_retries() {
+    local current_value
+    current_value=$(get_directive "defaults" "retries")
+
+    local new_value
+    new_value=$(show_inputbox "Edit Retries" \
+        "Enter number of connection retries:" \
+        "${current_value:-3}")
+
+    if [[ -z "$new_value" ]]; then
+        return
+    fi
+
+    # Validate it's a number
+    if ! [[ "$new_value" =~ ^[0-9]+$ ]]; then
+        show_msgbox "Error" "Invalid value: must be a number"
+        return
+    fi
+
+    # Ensure defaults section exists
+    if ! section_exists "defaults"; then
+        if section_exists "global"; then
+            SECTION_LIST=("global" "defaults" "${SECTION_LIST[@]:1}")
+        else
+            SECTION_LIST=("defaults" "${SECTION_LIST[@]}")
+        fi
+        CONFIG_ORDER["defaults"]=1
+    fi
+
+    if set_directive "defaults" "retries" "$new_value"; then
+        if write_config_file "$CONFIG_FILE" "Updated defaults retries to $new_value"; then
+            show_msgbox "Success" "Retries set to $new_value"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update retries"
+    fi
+}
+
+edit_defaults_balance() {
+    local current_balance
+    current_balance=$(get_directive "defaults" "balance")
+
+    local new_balance
+    new_balance=$(show_radiolist "Change Default Balance Algorithm" \
+        "Select default balance algorithm:" \
+        "roundrobin" "Round Robin" "$([ "$current_balance" = "roundrobin" ] && echo "on" || echo "off")" \
+        "leastconn" "Least Connections" "$([ "$current_balance" = "leastconn" ] && echo "on" || echo "off")" \
+        "source" "Source IP Hash" "$([ "$current_balance" = "source" ] && echo "on" || echo "off")")
+
+    if [[ -z "$new_balance" ]]; then
+        return
+    fi
+
+    # Ensure defaults section exists
+    if ! section_exists "defaults"; then
+        if section_exists "global"; then
+            SECTION_LIST=("global" "defaults" "${SECTION_LIST[@]:1}")
+        else
+            SECTION_LIST=("defaults" "${SECTION_LIST[@]}")
+        fi
+        CONFIG_ORDER["defaults"]=1
+    fi
+
+    if set_directive "defaults" "balance" "$new_balance"; then
+        if write_config_file "$CONFIG_FILE" "Updated defaults balance to $new_balance"; then
+            show_msgbox "Success" "Default balance algorithm set to $new_balance"
+        else
+            show_msgbox "Error" "Failed to write configuration"
+        fi
+    else
+        show_msgbox "Error" "Failed to update balance"
+    fi
+}
+
+manage_defaults_options() {
+    local current_httplog=""
+    local current_dontlognull=""
+    local current_http_server_close=""
+    local current_forwardfor=""
+    local current_redispatch=""
+
+    # Check current options
+    [[ -n "$(get_directive "defaults" "option httplog")" ]] && current_httplog="on" || current_httplog="off"
+    [[ -n "$(get_directive "defaults" "option dontlognull")" ]] && current_dontlognull="on" || current_dontlognull="off"
+    [[ -n "$(get_directive "defaults" "option http-server-close")" ]] && current_http_server_close="on" || current_http_server_close="off"
+    [[ -n "$(get_directive "defaults" "option forwardfor")" ]] && current_forwardfor="on" || current_forwardfor="off"
+    [[ -n "$(get_directive "defaults" "option redispatch")" ]] && current_redispatch="on" || current_redispatch="off"
+
+    local options_choice
+    options_choice=$(show_checklist "Manage Default Options" \
+        "Select default options to enable:" \
+        "httplog" "Enable HTTP logging" "$current_httplog" \
+        "dontlognull" "Don't log null connections" "$current_dontlognull" \
+        "http-server-close" "HTTP server close" "$current_http_server_close" \
+        "forwardfor" "Add X-Forwarded-For header" "$current_forwardfor" \
+        "redispatch" "Allow session redistribution" "$current_redispatch")
+
+    # Ensure defaults section exists
+    if ! section_exists "defaults"; then
+        if section_exists "global"; then
+            SECTION_LIST=("global" "defaults" "${SECTION_LIST[@]:1}")
+        else
+            SECTION_LIST=("defaults" "${SECTION_LIST[@]}")
+        fi
+        CONFIG_ORDER["defaults"]=1
+    fi
+
+    # Update options based on selection
+    [[ "$options_choice" =~ "httplog" ]] && set_directive "defaults" "option httplog" "" || delete_directive "defaults" "option httplog"
+    [[ "$options_choice" =~ "dontlognull" ]] && set_directive "defaults" "option dontlognull" "" || delete_directive "defaults" "option dontlognull"
+    [[ "$options_choice" =~ "http-server-close" ]] && set_directive "defaults" "option http-server-close" "" || delete_directive "defaults" "option http-server-close"
+    [[ "$options_choice" =~ "forwardfor" ]] && set_directive "defaults" "option forwardfor" "" || delete_directive "defaults" "option forwardfor"
+    [[ "$options_choice" =~ "redispatch" ]] && set_directive "defaults" "option redispatch" "" || delete_directive "defaults" "option redispatch"
+
+    if write_config_file "$CONFIG_FILE" "Updated defaults options"; then
+        show_msgbox "Success" "Default options updated successfully"
+    else
+        show_msgbox "Error" "Failed to write configuration"
+    fi
 }
 
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1354,7 +1807,7 @@ menu_help_exit() {
 
 show_about() {
     show_msgbox "HAProxy CLI GUI - About" \
-"HAProxy CLI GUI v1.0.0 - Phase 2
+"HAProxy CLI GUI v1.2.0 - Phase 3
 
 A fully interactive bash-based terminal GUI for managing
 HAProxy configuration files.
@@ -1363,10 +1816,12 @@ CRITICAL FEATURE:
 Every configuration modification automatically creates a
 full backup file before making changes.
 
-Phase 2 Features:
+Current Features:
 - Frontend & Backend Management (FULL)
 - Server Management (Add/Edit/Delete)
 - Bind Address Management
+- Global Settings (maxconn, user/group, daemon, threads)
+- Defaults Settings (timeouts, mode, options, balance)
 - Service Control (Reload/Restart/Status)
 - Automatic Backups (MANDATORY)
 - Configuration Validation
